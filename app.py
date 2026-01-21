@@ -236,40 +236,48 @@ def main():
         if st.button("📑 구글 시트 생성하기", use_container_width=True):
             try:
                 client = get_google_sheet_client()
-                SPREADSHEET_ID = '1ybfwTegu-hUKrUlGhLLkZMew2wSZcL95' # (주의) 엑셀 파일 말고 '구글 시트'의 ID여야 함
+                SPREADSHEET_ID = '1ybfwTegu-hUKrUlGhLLkZMew2wSZcL95' 
                 sh = client.open_by_key(SPREADSHEET_ID)
                 
+                # 1. 템플릿 시트 찾기
                 try:
                     template_worksheet = sh.worksheet("Template")
                 except:
+                    # Template 시트가 없으면 첫 번째 시트를 사용
                     template_worksheet = sh.get_worksheet(0)
 
+                # ====================================================
+                # [수정된 부분] duplicate() 대신 copy_to() 사용
+                # ====================================================
+                # 시트를 자기 자신(SPREADSHEET_ID)에게 복사합니다.
+                copied_sheet_dict = template_worksheet.copy_to(SPREADSHEET_ID)
+                
+                # 복사된 시트의 ID를 이용해 워크시트 객체를 다시 가져옵니다.
+                new_sheet_id = copied_sheet_dict['sheetId']
+                new_worksheet = sh.get_worksheet_by_id(new_sheet_id)
+                
+                # 이름 변경
                 new_title = f"{prod_name_kr}_{datetime.now().strftime('%m%d_%H%M')}"
-                new_worksheet = template_worksheet.duplicate()
                 new_worksheet.update_title(new_title)
+                # ====================================================
 
-                # 1. 개요 정보 (Master Data) 매핑
+                # 2. 데이터 매핑 (Master Data)
                 updates = [
                     {'range': 'C3', 'values': [[brand]]},          
                     {'range': 'C4', 'values': [[prod_name_kr]]},   
                     {'range': 'H3', 'values': [[item_code]]},      
                     {'range': 'H4', 'values': [[barcode]]},
                     {'range': 'C5', 'values': [[volume]]},         
-                    {'range': 'H5', 'values': [[price]]}, # 소수점 포함되어 입력됨
-                    # ... 필요한 만큼 추가
+                    {'range': 'H5', 'values': [[price]]},
                 ]
                 new_worksheet.batch_update(updates)
 
-                # 2. 상세 정보 (Detail Data) 순차 기입
+                # 3. 상세 정보 (Detail Data) 순차 기입
                 if not edited_df.empty:
-                    # (1) 입력된 데이터프레임에서 원하는 컬럼 순서 추출
                     final_df = edited_df[["분류", "하위분류", "재질", "규격", "단가", "협력사"]]
-                    
-                    # (2) 헤더(컬럼명)를 포함한 리스트로 변환 [헤더리스트, 데이터1, 데이터2...]
-                    # 이렇게 하면 헤더와 내용이 함께 시트에 들어갑니다.
+                    # 헤더 포함하여 리스트로 변환
                     data_with_headers = [final_df.columns.values.tolist()] + final_df.fillna("").values.tolist()
-                    
-                    # (3) B10 셀(원하는 시작 위치)부터 통째로 업데이트
+                    # B10 셀부터 업데이트
                     new_worksheet.update('B10', data_with_headers)
 
                 st.success(f"시트 생성 완료! : {new_title}")
