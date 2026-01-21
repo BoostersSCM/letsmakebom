@@ -194,7 +194,7 @@ with col_btn2:
         try:
             client = get_google_sheet_client()
             # 1. 원본 템플릿 시트 ID (공유해주신 시트 ID 사용)
-            SPREADSHEET_ID = '1ybfwTegu-hUKrUlGhLLkZMew2wSZcL95' 
+            SPREADSHEET_ID = '1oPMCLBc_iOARMogcARHHDXO2Gdx1uBvc2Xpgy0LLgO4' 
             sh = client.open_by_key(SPREADSHEET_ID)
             
             # 2. 템플릿 시트 복사 (Template 시트 이름이 'Template'이라고 가정)
