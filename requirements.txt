@@ -3,3 +3,4 @@ pandas
 mysql-connector-python
 gspread
 oauth2client
+streamlit-oauth
